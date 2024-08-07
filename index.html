@@ -1,0 +1,480 @@
+<html><head><base href="https://webify.cloudsite.io/"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SARATSO Certification Training Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f7f9fc;
+    color: #333;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  }
+  .dashboard-header {
+    background: linear-gradient(135deg, #4a5568, #2d3748);
+    color: white;
+    padding: 20px;
+    border-radius: 12px 12px 0 0;
+    margin: -30px -30px 30px -30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  h1 {
+    font-size: 28px;
+    margin: 0;
+    font-weight: 300;
+  }
+  h2 {
+    font-size: 20px;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+  .top-section, .domain-container, .stats-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    gap: 30px;
+  }
+  .attendance-form, .trainee-list, .domain, .stat-card {
+    flex: 1;
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  .trainee-list table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 14px;
+  }
+  .trainee-list th, .trainee-list td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+  .trainee-list th {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+  .trainee-list tr:last-child td {
+    border-bottom: none;
+  }
+  .trainee-list tr:hover {
+    background-color: #f8f9fa;
+  }
+  .domain-container {
+    flex-wrap: wrap;
+  }
+  .domain {
+    flex-basis: calc(50% - 15px);
+    margin-bottom: 30px;
+  }
+  .chart-container {
+    position: relative;
+    height: 250px;
+  }
+  .toggle-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+  .toggle-btn {
+    background-color: #e2e8f0;
+    border: none;
+    color: #4a5568;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+  }
+  .toggle-btn:hover {
+    background-color: #cbd5e0;
+  }
+  .toggle-btn.active {
+    background-color: #4a5568;
+    color: white;
+  }
+  .progress-bar {
+    height: 8px;
+    background-color: #edf2f7;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 5px;
+  }
+  .progress {
+    height: 100%;
+    background-color: #48bb78;
+    transition: width 0.5s ease-in-out;
+  }
+  .absent {
+    background-color: #fc8181;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 12px;
+  }
+  .attendance-form input, .attendance-form select {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+  }
+  .attendance-form input:focus, .attendance-form select:focus {
+    outline: none;
+    border-color: #4a5568;
+  }
+  .attendance-form button {
+    background-color: #4a5568;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .attendance-form button:hover {
+    background-color: #2d3748;
+  }
+  .stat-card {
+    text-align: center;
+    padding: 20px;
+  }
+  .stat-value {
+    font-size: 36px;
+    font-weight: bold;
+    color: #4a5568;
+    margin-bottom: 10px;
+  }
+  .stat-label {
+    font-size: 14px;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="dashboard-header">
+      <h1>SARATSO Certification Training Dashboard</h1>
+      <div class="toggle-container">
+        <button id="coreBtn" class="toggle-btn active">Core Topics</button>
+        <button id="adjunctBtn" class="toggle-btn">Adjunct Topics</button>
+      </div>
+    </div>
+    
+    <div class="top-section">
+      <div class="attendance-form">
+        <h2>Record Attendance</h2>
+        <form id="attendanceForm">
+          <input type="text" id="attendeeName" placeholder="Attendee Name" required>
+          <select id="trainingType" required>
+            <option value="">Select Training Type</option>
+            <option value="sponsored">Sponsored Training</option>
+            <option value="external">External SARATSO Training</option>
+          </select>
+          <input type="text" id="trainingName" placeholder="Training Name" required>
+          <input type="date" id="trainingDate" required>
+          <button type="submit">Record Attendance</button>
+        </form>
+      </div>
+      
+      <div class="trainee-list">
+        <h2>Current Trainees</h2>
+        <table id="traineeTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Department</th>
+              <th>Progress</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Trainee data will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-value" id="totalCertifications">0</div>
+        <div class="stat-label">Total Certifications Issued</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="activeCertifications">0</div>
+        <div class="stat-label">Active Certifications</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="pendingCertifications">0</div>
+        <div class="stat-label">Pending Certifications</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="expiringCertifications">0</div>
+        <div class="stat-label">Certifications Expiring Soon</div>
+      </div>
+    </div>
+    
+    <div class="domain-container" id="domainContainer"></div>
+  </div>
+
+  <script>
+    const domains = {
+      core: [
+        {
+          name: "Sex Offender Characteristics",
+          topics: [
+            "Empirical data",
+            "Offense characteristics",
+            "Cycles and pathways",
+            "Thinking errors",
+            "Adverse Childhood Experiences",
+            "Neurobiological factors"
+          ]
+        },
+        {
+          name: "Sex Offender Assessment",
+          topics: [
+            "Assessment procedures",
+            "Risk assessment tools",
+            "Validated tools",
+            "Special populations",
+            "Sexual deviance measurement",
+            "Paraphilias diagnosis"
+          ]
+        },
+        {
+          name: "Sex Offender Treatment",
+          topics: [
+            "Evidence-based treatment",
+            "Risk, needs, responsivity",
+            "Treatment planning",
+            "Denial and resistance",
+            "Group therapy dynamics",
+            "Pharmacotherapy"
+          ]
+        },
+        {
+          name: "Core Topics",
+          topics: [
+            "Transtheoretical Model",
+            "Motivational Interviewing",
+            "Psychopathy",
+            "Program evaluation",
+            "Cognitive Behavioral Therapy",
+            "Group therapy"
+          ]
+        }
+      ],
+      adjunct: [
+        {
+          name: "Human Sexuality",
+          topics: [
+            "Behavioral techniques",
+            "Deviant sexual arousal",
+            "Deviant fantasies",
+            "Reduce arousal",
+            "Healthy sexuality",
+            "Cultural issues"
+          ]
+        },
+        {
+          name: "Sex Offender Management",
+          topics: [
+            "Legal and ethical issues",
+            "Law and policy",
+            "Containment Model",
+            "Polygraphy use",
+            "Clinical supervision",
+            "Registration requirements"
+          ]
+        },
+        {
+          name: "Adjunct Topics I",
+          topics: [
+            "California abuse reporting",
+            "Sexual compulsivity",
+            "Pornography issues",
+            "Human trafficking",
+            "Empathy training",
+            "Victim Issues"
+          ]
+        },
+        {
+          name: "Adjunct Topics II",
+          topics: [
+            "Impact on society",
+            "Assessment of progress",
+            "Secondary trauma",
+            "Therapist wellness",
+            "Anger management",
+            "Substance abuse"
+          ]
+        }
+      ]
+    };
+
+    const colorSchemes = [
+      ['#3182ce', '#4299e1', '#63b3ed', '#90cdf4', '#bee3f8', '#ebf8ff'],
+      ['#38a169', '#48bb78', '#68d391', '#9ae6b4', '#c6f6d5', '#f0fff4'],
+      ['#dd6b20', '#ed8936', '#f6ad55', '#fbd38d', '#feebc8', '#fffaf0'],
+      ['#805ad5', '#9f7aea', '#b794f4', '#d6bcfa', '#e9d8fd', '#faf5ff']
+    ];
+
+    function createRadarChart(ctx, data, labels, colorScheme) {
+      return new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: colorScheme[1] + '40',
+            borderColor: colorScheme[1],
+            borderWidth: 2,
+            pointBackgroundColor: colorScheme[0],
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: colorScheme[0]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              angleLines: {
+                display: false
+              },
+              suggestedMin: 0,
+              suggestedMax: 100
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+
+    function displayDomains(type) {
+      const container = document.getElementById('domainContainer');
+      container.innerHTML = '';
+      
+      domains[type].forEach((domain, index) => {
+        const domainElement = document.createElement('div');
+        domainElement.className = 'domain';
+        domainElement.innerHTML = `
+          <h2>${domain.name}</h2>
+          <div class="chart-container">
+            <canvas id="chart${index}"></canvas>
+          </div>
+        `;
+        container.appendChild(domainElement);
+        
+        const ctx = document.getElementById(`chart${index}`).getContext('2d');
+        const data = domain.topics.map(() => Math.floor(Math.random() * 80) + 20);
+        createRadarChart(ctx, data, domain.topics, colorSchemes[index % colorSchemes.length]);
+      });
+    }
+
+    displayDomains('core');
+
+    document.getElementById('coreBtn').addEventListener('click', function() {
+      this.classList.add('active');
+      document.getElementById('adjunctBtn').classList.remove('active');
+      displayDomains('core');
+    });
+
+    document.getElementById('adjunctBtn').addEventListener('click', function() {
+      this.classList.add('active');
+      document.getElementById('coreBtn').classList.remove('active');
+      displayDomains('adjunct');
+    });
+
+    // Sample trainee data
+    const trainees = [
+      { name: "John Doe", role: "Psychologist", department: "Assessment", progress: 75 },
+      { name: "Jane Smith", role: "Therapist", department: "Treatment", progress: 90 },
+      { name: "Mike Johnson", role: "Case Manager", department: "Management", progress: 60 },
+      { name: "Emily Brown", role: "Social Worker", department: "Support", progress: 85 },
+      { name: "Alex Lee", role: "Researcher", department: "Evaluation", progress: 70 },
+      { name: "Sarah Connor", role: "Clinical Supervisor", department: "Management", progress: 0, absent: true }
+    ];
+
+    // Populate trainee table
+    const traineeTable = document.getElementById('traineeTable').getElementsByTagName('tbody')[0];
+    trainees.forEach(trainee => {
+      const row = traineeTable.insertRow();
+      row.insertCell(0).textContent = trainee.name;
+      row.insertCell(1).textContent = trainee.role;
+      row.insertCell(2).textContent = trainee.department;
+      const progressCell = row.insertCell(3);
+      if (trainee.absent) {
+        progressCell.innerHTML = '<span class="absent">Absent</span>';
+      } else {
+        progressCell.innerHTML = `
+          <div class="progress-bar">
+            <div class="progress" style="width: ${trainee.progress}%"></div>
+          </div>
+          ${trainee.progress}%
+        `;
+      }
+    });
+
+    // Attendance form submission
+    document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name = document.getElementById('attendeeName').value;
+      const type = document.getElementById('trainingType').value;
+      const trainingName = document.getElementById('trainingName').value;
+      const date = document.getElementById('trainingDate').value;
+      
+      console.log(`Attendance recorded for ${name} - ${type} training: ${trainingName} on ${date}`);
+      // Here you would typically send this data to a server to be stored
+      
+      // Reset form
+      this.reset();
+      alert('Attendance recorded successfully!');
+    });
+
+    // Update certification statistics
+    function updateCertificationStats() {
+      document.getElementById('totalCertifications').textContent = Math.floor(Math.random() * 1000) + 500;
+      document.getElementById('activeCertifications').textContent = Math.floor(Math.random() * 800) + 300;
+      document.getElementById('pendingCertifications').textContent = Math.floor(Math.random() * 100) + 50;
+      document.getElementById('expiringCertifications').textContent = Math.floor(Math.random() * 50) + 10;
+    }
+
+    // Initial update of certification statistics
+    updateCertificationStats();
+
+    // Update certification statistics every 5 minutes (300000 milliseconds)
+    setInterval(updateCertificationStats, 300000);
+  </script>
+</body>
+</html>
